@@ -62,19 +62,21 @@ def rebuild_userlist(users_view, users_list, page):
     # Add "Chat" label if there are in-chat users
     if in_chat:
         chat_label = ft.Text(
-            "Chat",
-            size=10,
-            color=ft.Colors.GREY_400,
+            "💬 Chat",
+            size=16,
+            color=ft.Colors.GREY_700,
             weight=ft.FontWeight.BOLD
         )
         users_view.controls.insert(0, chat_label)
     
-    # Add "Game" label before in-game users
+    # Add gap and "Game" label before in-game users
     if in_game:
+        if in_chat:
+            users_view.controls.append(ft.Container(height=12))
         game_label = ft.Text(
-            "Game",
-            size=10,
-            color=ft.Colors.GREY_400,
+            "🎮 Game",
+            size=16,
+            color=ft.Colors.GREY_700,
             weight=ft.FontWeight.BOLD
         )
         users_view.controls.append(game_label)
