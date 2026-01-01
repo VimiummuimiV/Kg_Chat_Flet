@@ -1,5 +1,6 @@
 """User list display UI for the chat."""
 import flet as ft
+from helpers.color_contrast import optimize_color_contrast
 
 
 def build_userlist_ui(page):
@@ -86,6 +87,10 @@ def _create_user_row(user, scale, scaled_size, in_game=False):
     
     # Username with color from background
     bg_color = user.background if hasattr(user, 'background') and user.background else None
+    
+    # Optimize color for contrast on dark background
+    if bg_color:
+        bg_color = optimize_color_contrast(bg_color, '#1E1E1E', target_ratio=4.5)
     
     if in_game and user.game_id:
         username_text = ft.Text(

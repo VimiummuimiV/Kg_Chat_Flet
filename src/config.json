@@ -21,6 +21,8 @@
   },
   "ui": {
     "font_size": 152,
-    "userlist_visible": true
+    "userlist_visible": true,
+    "background_color": "#1E1E1E",
+    "contrast_ratio": 4.5
   }
 }

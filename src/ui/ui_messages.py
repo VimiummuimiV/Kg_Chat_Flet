@@ -1,6 +1,7 @@
 """Messages display UI for the chat."""
 import flet as ft
 from datetime import datetime
+from helpers.color_contrast import optimize_color_contrast
 
 
 def build_messages_ui(page):
@@ -75,6 +76,10 @@ def add_message_to_view(messages_view, msg, page, input_field=None):
     # Get login and background color
     login = msg.login if msg.login else "Unknown"
     bg_color = msg.background if hasattr(msg, 'background') and msg.background else None
+    
+    # Optimize color for contrast on dark background
+    if bg_color:
+        bg_color = optimize_color_contrast(bg_color, '#1E1E1E', target_ratio=4.5)
 
     # Create time part (store base size so apply_font_size is consistent)
     time_text = ft.Text(
