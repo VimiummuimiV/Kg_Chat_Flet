@@ -19,6 +19,7 @@ def build_messages_ui(page):
     input_field = ft.TextField(
         label="Type a message...",
         multiline=True,
+        shift_enter=True,
         min_lines=1,
         max_lines=3,
         expand=True,
