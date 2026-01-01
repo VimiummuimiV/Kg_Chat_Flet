@@ -1,6 +1,8 @@
 """Messages display UI for the chat."""
 import flet as ft
 from datetime import datetime
+import json
+from pathlib import Path
 from helpers.color_contrast import optimize_color_contrast
 
 
@@ -79,7 +81,16 @@ def add_message_to_view(messages_view, msg, page, input_field=None):
     
     # Optimize color for contrast on dark background
     if bg_color:
-        bg_color = optimize_color_contrast(bg_color, '#1E1E1E', target_ratio=4.5)
+        try:
+            with open(Path(__file__).parent.parent / "config.json", 'r') as f:
+                ui_cfg = json.load(f).get('ui', {})
+            bg_color = optimize_color_contrast(
+                bg_color, 
+                ui_cfg.get('background_color', '#1E1E1E'), 
+                target_ratio=ui_cfg.get('contrast_ratio', 4.5)
+            )
+        except:
+            bg_color = optimize_color_contrast(bg_color, '#1E1E1E', target_ratio=4.5)
 
     # Create time part (store base size so apply_font_size is consistent)
     time_text = ft.Text(
