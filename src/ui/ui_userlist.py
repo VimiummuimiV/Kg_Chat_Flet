@@ -49,20 +49,29 @@ def rebuild_userlist(users_view, users_list, page):
     # Separate into in-chat and in-game
     in_chat = [u for u in online_users if not u.game_id]
     in_game = [u for u in online_users if u.game_id]
-    
-    # Sort both lists by login
+
+    # Prepare per-user counters so sorting is deterministic
+    s = page.data.setdefault('user_game_state', {}) if page is not None else {}
+    for u in in_game:
+        st = s.get(u.login)
+        if not st or st.get('last_game_id') != u.game_id:
+            new_counter = 1 if not st else (st.get('counter', 0) + 1)
+            if page is not None:
+                s[u.login] = {'last_game_id': u.game_id, 'counter': new_counter}
+
+    # Sort: chat alphabetically, game by counter desc then login
     in_chat = sorted(in_chat, key=lambda u: u.login.lower())
-    in_game = sorted(in_game, key=lambda u: u.login.lower())
+    in_game = sorted(in_game, key=lambda u: (-(s.get(u.login, {}).get('counter', 0)), u.login.lower()))
     
     # Add in-chat users first
     for user in in_chat:
-        user_row = _create_user_row(user, scale, scaled_size, in_game=False)
+        user_row = _create_user_row(user, scale, scaled_size, in_game=False, page=page)
         users_view.controls.append(user_row)
     
     # Add "Chat" label if there are in-chat users
     if in_chat:
         chat_label = ft.Text(
-            "💬 Chat",
+            "🗯️ Chat",
             size=16,
             color=ft.Colors.GREY_700,
             weight=ft.FontWeight.BOLD
@@ -74,7 +83,7 @@ def rebuild_userlist(users_view, users_list, page):
         if in_chat:
             users_view.controls.append(ft.Container(height=12))
         game_label = ft.Text(
-            "🎮 Game",
+            "🏁 Game",
             size=16,
             color=ft.Colors.GREY_700,
             weight=ft.FontWeight.BOLD
@@ -83,63 +92,56 @@ def rebuild_userlist(users_view, users_list, page):
     
     # Add in-game users
     for user in in_game:
-        user_row = _create_user_row(user, scale, scaled_size, in_game=True)
+        user_row = _create_user_row(user, scale, scaled_size, in_game=True, page=page)
         users_view.controls.append(user_row)
 
 
-def _create_user_row(user, scale, scaled_size, in_game=False):
-    """Create a user row widget."""
+def _create_user_row(user, scale, scaled_size, in_game=False, page=None):
     user_widgets = []
-    
-    # Add avatar if available
+
     if hasattr(user, 'get_avatar_url') and user.get_avatar_url():
         try:
             avatar = ft.Image(
                 src=user.get_avatar_url(),
-                width=int(20 * scale),
-                height=int(20 * scale),
+                width=int(18 * scale),
+                height=int(18 * scale),
                 fit=ft.ImageFit.COVER,
                 border_radius=ft.border_radius.all(3)
             )
             user_widgets.append(avatar)
         except:
             pass
-    
-    # Username with color from background
+
     bg_color = user.background if hasattr(user, 'background') and user.background else None
-    
-    # Optimize color for contrast on dark background
+
     if bg_color:
         try:
             with open(Path(__file__).parent.parent / "config.json", 'r') as f:
                 ui_cfg = json.load(f).get('ui', {})
-            bg_color = optimize_color_contrast(
-                bg_color, 
-                ui_cfg.get('background_color', '#1E1E1E'), 
-                target_ratio=ui_cfg.get('contrast_ratio', 4.5)
-            )
+            bg_color = optimize_color_contrast(bg_color, ui_cfg.get('background_color', '#1E1E1E'), target_ratio=ui_cfg.get('contrast_ratio', 4.5))
         except:
             bg_color = optimize_color_contrast(bg_color, '#1E1E1E', target_ratio=4.5)
-    
-    if in_game and user.game_id:
-        username_text = ft.Text(
-            f"{user.login} 🎮#{user.game_id}",
-            color=bg_color if bg_color else ft.Colors.BLUE_400
-        )
+
+    display_name = user.login
+    if in_game and getattr(user, 'game_id', None):
+        s = page.data.setdefault('user_game_state', {}) if page is not None else {}
+        st = s.get(user.login)
+        if not st or st.get('last_game_id') != user.game_id:
+            new_counter = 1 if not st else (st.get('counter', 0) + 1)
+            if page is not None:
+                s[user.login] = {'last_game_id': user.game_id, 'counter': new_counter}
+        else:
+            new_counter = st.get('counter', 1)
+        display_name = f"{user.login} 🚦{new_counter}"
     else:
-        username_text = ft.Text(
-            user.login,
-            color=bg_color if bg_color else None
-        )
+        if page is not None and 'user_game_state' in page.data and user.login in page.data['user_game_state']:
+            page.data['user_game_state'].pop(user.login, None)
+
+    username_text = ft.Text(display_name, color=bg_color if bg_color else None)
     username_text._base_size = 11
     username_text.size = scaled_size
-    
     user_widgets.append(username_text)
-    
-    user_row = ft.Row(
-        user_widgets,
-        spacing=6,
-        vertical_alignment=ft.CrossAxisAlignment.CENTER
-    )
-    
+
+    user_row = ft.Row(user_widgets, spacing=4, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+
     return user_row

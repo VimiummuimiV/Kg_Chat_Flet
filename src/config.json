@@ -22,7 +22,7 @@
   "ui": {
     "font_size": 169,
     "userlist_visible": true,
-    "theme_mode": "light",
+    "theme_mode": "dark",
     "background_color": "#1E1E1E",
     "contrast_ratio": 4.5,
     "button_size": 48,
