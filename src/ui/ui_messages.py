@@ -25,8 +25,6 @@ def build_messages_ui(page):
         expand=True,
         text_size=12
     )
-    # Mark input field for font size scaling
-    input_field._base_text_size = 12
     
     send_button = ft.Button("Send", height=40)
     
