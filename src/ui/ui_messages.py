@@ -25,7 +25,7 @@ def build_messages_ui(page):
         text_size=12
     )
     
-    send_button = ft.ElevatedButton("Send", height=40)
+    send_button = ft.Button("Send", height=40)
     
     input_row = ft.Row(
         [input_field, send_button],

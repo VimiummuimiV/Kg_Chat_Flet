@@ -74,7 +74,7 @@ def rebuild_userlist(users_view, users_list, page):
                 f"{user.login} 🎮#{user.game_id}",
                 size=scaled_size,
                 italic=True,
-                color=ft.colors.BLUE_400
+                color=ft.Colors.BLUE_400
             )
         else:
             username_text = ft.Text(

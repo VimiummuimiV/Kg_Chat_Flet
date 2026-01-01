@@ -54,10 +54,11 @@ def main(page: ft.Page):
                 users_container.visible = userlist_visible[0]
                 page.update()
             
-            toggle_users_btn = ft.IconButton(
-                icon=ft.icons.PEOPLE_ALT,
+            toggle_users_btn = ft.ElevatedButton(
+                "👥",
                 on_click=on_toggle_userlist,
-                tooltip="Toggle user list"
+                tooltip="Toggle user list",
+                width=50
             )
             
             # Header with controls
@@ -142,4 +143,4 @@ def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.run(target=main)
+    ft.app(target=main)
