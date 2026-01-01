@@ -59,9 +59,25 @@ def rebuild_userlist(users_view, users_list, page):
         user_row = _create_user_row(user, scale, scaled_size, in_game=False)
         users_view.controls.append(user_row)
     
-    # Add separator if both groups exist
-    if in_chat and in_game:
-        users_view.controls.append(ft.Divider(height=1))
+    # Add "Chat" label if there are in-chat users
+    if in_chat:
+        chat_label = ft.Text(
+            "Chat",
+            size=10,
+            color=ft.Colors.GREY_400,
+            weight=ft.FontWeight.BOLD
+        )
+        users_view.controls.insert(0, chat_label)
+    
+    # Add "Game" label before in-game users
+    if in_game:
+        game_label = ft.Text(
+            "Game",
+            size=10,
+            color=ft.Colors.GREY_400,
+            weight=ft.FontWeight.BOLD
+        )
+        users_view.controls.append(game_label)
     
     # Add in-game users
     for user in in_game:
