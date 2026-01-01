@@ -34,11 +34,18 @@ def build_messages_ui(page):
     # Opt into font size scaling system
     input_field._base_text_size = base_text_size
     
+    # Configure button/icon sizes
+    try:
+        from settings.ui_scale import load_icon_settings
+        btn_size, icon_size = load_icon_settings()
+    except Exception:
+        btn_size, icon_size = 48, 20
+
     send_button = ft.IconButton(
-        icon=ft.Icons.SEND,
+        icon=ft.Icon(ft.Icons.SEND, size=icon_size),
         tooltip="Send message",
-        width=48,
-        height=48,
+        width=btn_size,
+        height=btn_size,
     )
 
     

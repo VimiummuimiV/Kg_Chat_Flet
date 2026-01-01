@@ -142,3 +142,18 @@ def build_font_controls(on_font_change_callback=None) -> tuple:
     )
 
     return slider, label, initial_font
+
+
+def load_icon_settings(default_button_size: int = 48, default_icon_size: int = 20) -> tuple:
+    """Load button size and icon size from config.ui with sensible defaults.
+
+    Returns (button_size, icon_size)
+    """
+    try:
+        cfg = _read_config()
+        ui = cfg.get("ui", {})
+        btn = int(ui.get("button_size", default_button_size))
+        icon = int(ui.get("icon_size", default_icon_size))
+        return btn, icon
+    except Exception:
+        return default_button_size, default_icon_size

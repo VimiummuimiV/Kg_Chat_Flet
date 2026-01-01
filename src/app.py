@@ -68,11 +68,14 @@ def main(page: ft.Page):
                 save_userlist_visible(userlist_visible[0])
                 page.update()
             
-            toggle_users_btn = ft.ElevatedButton(
-                icon=ft.Icons.PEOPLE,
+            # Configure button/icon sizes from config
+            from settings.ui_scale import load_icon_settings
+            btn_size, icon_size = load_icon_settings()
+            toggle_users_btn = ft.IconButton(
+                icon=ft.Icon(ft.Icons.PEOPLE, size=icon_size),
                 tooltip="Toggle user list",
-                width=48,
-                height=48,
+                width=btn_size,
+                height=btn_size,
                 on_click=on_toggle_userlist,
             )
 

@@ -20,9 +20,11 @@
     "lang": "en"
   },
   "ui": {
-    "font_size": 152,
+    "font_size": 169,
     "userlist_visible": true,
     "background_color": "#1E1E1E",
-    "contrast_ratio": 4.5
+    "contrast_ratio": 4.5,
+    "button_size": 48,
+    "icon_size": 32
   }
 }
