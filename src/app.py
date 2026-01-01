@@ -57,6 +57,9 @@ def main(page: ft.Page):
             def on_font_change(value):
                 page.data['font_size'] = value
                 apply_font_size(page, value)
+                # Rebuild userlist to update avatar sizes
+                if xmpp_client:
+                    rebuild_userlist(users_view, xmpp_client.user_list.get_all(), page)
                 page.update()
 
             scale_slider, scale_label, initial_size = build_font_controls(on_font_change)
@@ -113,9 +116,13 @@ def main(page: ft.Page):
                 from ui.ui_messages import add_message_to_view
                 add_message_to_view(messages_view, msg, page, input_field)
 
-                # Show desktop notification for messages from others
+                # Show desktop notification for messages from others ONLY if window is not focused
                 try:
-                    if not getattr(msg, 'initial', False) and msg.login and msg.login != account.get('login'):
+                    # Check if message is from another user and window is not in focus
+                    is_from_other = not getattr(msg, 'initial', False) and msg.login and msg.login != account.get('login')
+                    window_not_focused = not getattr(page, 'window_focused', True)
+                    
+                    if is_from_other and window_not_focused:
                         send_chat_notification(msg)
                 except Exception as e:
                     print(f"desktop notify error: {e}")
