@@ -242,6 +242,9 @@ class XMPPClient:
         messages, presence_updates = MessageParser.parse(xml_text)
         
         for msg in messages:
+            # Mark whether this message comes from initial roster load
+            setattr(msg, 'initial', bool(is_initial_roster))
+
             body = (msg.body or "").strip()
             if msg.login == 'Клавобот' or ('not anonymous' in body.lower()):
                 continue
