@@ -8,20 +8,20 @@ def build_userlist_ui(page):
     Returns:
         (users_container, users_view)
     """
-    scale = page.data.get('scale', 100) / 100.0
-    
+    scale = page.data.get('font_size', 100) / 100.0
+
     users_view = ft.ListView(
         expand=True,
         spacing=4,
         padding=ft.padding.all(5)
     )
-    
+    # Keep container width static (do not scale UI elements)
     users_container = ft.Column(
         [users_view],
-        width=int(220 * scale),
+        width=220,
         spacing=0
     )
-    
+
     return users_container, users_view
 
 
@@ -34,7 +34,7 @@ def rebuild_userlist(users_view, users_list, page):
         users_list: list of core.userlist.ChatUser objects
         page: Page object for scaling
     """
-    scale = page.data.get('scale', 100) / 100.0
+    scale = page.data.get('font_size', 100) / 100.0
     base_size = 11
     scaled_size = base_size * scale
     
@@ -90,15 +90,15 @@ def _create_user_row(user, scale, scaled_size, in_game=False):
     if in_game and user.game_id:
         username_text = ft.Text(
             f"{user.login} 🎮#{user.game_id}",
-            size=scaled_size,
             color=bg_color if bg_color else ft.Colors.BLUE_400
         )
     else:
         username_text = ft.Text(
             user.login,
-            size=scaled_size,
             color=bg_color if bg_color else None
         )
+    username_text._base_size = 11
+    username_text.size = scaled_size
     
     user_widgets.append(username_text)
     

@@ -21,7 +21,7 @@
   },
   "ui": {
     "current_theme": "",
-    "ui_scale": 100,
+    "font_size": 190,
     "userlist_visible": true
   }
 }

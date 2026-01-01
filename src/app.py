@@ -5,7 +5,7 @@ import flet as ft
 from ui.accounts_manager import build_welcome
 from ui.ui_messages import build_messages_ui
 from ui.ui_userlist import build_userlist_ui, rebuild_userlist
-from settings.ui_scale import build_scale_controls, load_scale, apply_scale
+from settings.ui_scale import build_font_controls, load_font_size, apply_font_size, load_userlist_visible, save_userlist_visible
 from core.xmpp import XMPPClient
 
 
@@ -14,10 +14,12 @@ def main(page: ft.Page):
     page.padding = 10
     xmpp_client = None
     
-    # Initialize scale in page.data
+    # Initialize scale and other UI settings in page.data
     if page.data is None:
         page.data = {}
-    page.data['scale'] = load_scale()
+    page.data['font_size'] = load_font_size()
+    # remember whether userlist should be visible
+    page.data['userlist_visible'] = load_userlist_visible()
     
     def on_connect(login, account):
         """Called when user clicks Connect in welcome screen."""
@@ -38,20 +40,25 @@ def main(page: ft.Page):
             messages_container, input_field, send_button, messages_view = build_messages_ui(page)
             users_container, users_view = build_userlist_ui(page)
             
-            # Build scale controls
-            def on_scale_change(value):
-                page.data['scale'] = value
-                apply_scale(page, value)
+            # Build font size controls (affects only message & userlist text)
+            def on_font_change(value):
+                page.data['font_size'] = value
+                apply_font_size(page, value)
                 page.update()
-            
-            scale_slider, scale_label, initial_scale = build_scale_controls(on_scale_change)
-            apply_scale(page, initial_scale)
+
+            scale_slider, scale_label, initial_size = build_font_controls(on_font_change)
+            apply_font_size(page, initial_size)
             
             # Create toggle button for userlist
-            userlist_visible = [True]  # Use list to make it mutable in closure
+            userlist_visible = [bool(page.data.get('userlist_visible', True))]  # Use list to make it mutable in closure
+            users_container.visible = userlist_visible[0]
+
             def on_toggle_userlist(e):
                 userlist_visible[0] = not userlist_visible[0]
                 users_container.visible = userlist_visible[0]
+                page.data['userlist_visible'] = userlist_visible[0]
+                from settings.ui_scale import save_userlist_visible
+                save_userlist_visible(userlist_visible[0])
                 page.update()
             
             toggle_users_btn = ft.ElevatedButton(
@@ -66,7 +73,7 @@ def main(page: ft.Page):
                 [
                     toggle_users_btn,
                     ft.VerticalDivider(width=1),
-                    ft.Text("Scale:", size=11),
+                    ft.Text("Font size:", size=11),
                     scale_slider,
                     scale_label
                 ],
@@ -140,6 +147,8 @@ def main(page: ft.Page):
     
     # Start with welcome screen
     build_welcome(page, on_connect_callback=on_connect)
+    # Apply initial font size to the welcome screen so sizes reflect saved preference
+    apply_font_size(page, page.data.get('font_size', 100))
 
 
 if __name__ == "__main__":

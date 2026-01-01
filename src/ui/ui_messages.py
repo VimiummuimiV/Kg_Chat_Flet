@@ -25,6 +25,8 @@ def build_messages_ui(page):
         expand=True,
         text_size=12
     )
+    # Mark input field for font size scaling
+    input_field._base_text_size = 12
     
     send_button = ft.Button("Send", height=40)
     
@@ -52,7 +54,7 @@ def add_message_to_view(messages_view, msg, page):
         msg: Message object with login, body, timestamp, etc.
         page: Page object for scaling
     """
-    scale = page.data.get('scale', 100) / 100.0
+    scale = page.data.get('font_size', 100) / 100.0
     base_size = 11
     scaled_size = base_size * scale
     
@@ -64,27 +66,30 @@ def add_message_to_view(messages_view, msg, page):
     login = msg.login if msg.login else "Unknown"
     bg_color = msg.background if hasattr(msg, 'background') and msg.background else None
     
-    # Create time part
+    # Create time part (store base size so apply_font_size is consistent)
     time_text = ft.Text(
         f"{time_str} ",
-        size=scaled_size,
         color=ft.Colors.GREY_500
     )
-    
+    time_text._base_size = base_size
+    time_text.size = base_size * scale
+
     # Create username part with color
     username_text = ft.Text(
         f"{login}: ",
-        size=scaled_size,
         weight=ft.FontWeight.BOLD,
         color=bg_color if bg_color else None
     )
-    
+    username_text._base_size = base_size
+    username_text.size = base_size * scale
+
     # Create message part
     message_text = ft.Text(
         msg.body,
-        size=scaled_size,
         selectable=True
     )
+    message_text._base_size = base_size
+    message_text.size = base_size * scale
     
     # Combine in a row that wraps
     msg_row = ft.Row(
