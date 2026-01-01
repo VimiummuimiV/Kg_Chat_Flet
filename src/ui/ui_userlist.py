@@ -18,10 +18,10 @@ def build_userlist_ui(page):
         spacing=4,
         padding=ft.padding.all(5)
     )
-    # Keep container width static (do not scale UI elements)
+    # Wider container to accommodate long usernames and game counters
     users_container = ft.Column(
         [users_view],
-        width=220,
+        width=280,  # Increased from 220 to 280
         spacing=0
     )
 
@@ -161,7 +161,12 @@ def _create_user_row(user, scale, scaled_size, in_game=False, page=None):
             page.data['user_game_state'].pop(user.login, None)
 
     # Create username text with color
-    username_text = ft.Text(display_name, color=bg_color if bg_color else None)
+    username_text = ft.Text(
+        display_name, 
+        color=bg_color if bg_color else None,
+        overflow=ft.TextOverflow.ELLIPSIS,  # Add ellipsis for very long names
+        max_lines=1
+    )
     username_text._base_size = 11
     username_text.size = scaled_size
     user_widgets.append(username_text)
