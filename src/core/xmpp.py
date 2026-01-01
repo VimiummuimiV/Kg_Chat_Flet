@@ -227,9 +227,14 @@ class XMPPClient:
         ET.SubElement(message, 'body').text = body
         
         try:
-            self.send_request(self.build_body(children=[message]), verbose=False)
+            response = self.send_request(self.build_body(children=[message]), verbose=False)
+            # Process server response immediately (server may include an echo)
+            try:
+                self._process_response(response)
+            except Exception:
+                pass
             return True
-        except:
+        except Exception:
             return False
     
     def _process_response(self, xml_text: str, is_initial_roster: bool = False):
