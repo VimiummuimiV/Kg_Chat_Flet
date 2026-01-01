@@ -21,18 +21,23 @@ def build_messages_ui(page):
     base_text_size = 12
     
     input_field = ft.TextField(
-        label="Type a message...",
         multiline=True,
         shift_enter=True,
         min_lines=1,
-        max_lines=3,
+        max_lines=5,
         expand=True,
         text_size=base_text_size * scale
     )
     # Opt into font size scaling system
     input_field._base_text_size = base_text_size
     
-    send_button = ft.Button("Send", height=40)
+    send_button = ft.IconButton(
+        icon=ft.Icons.SEND,
+        tooltip="Send message",
+        width=48,
+        height=48,
+    )
+
     
     input_row = ft.Row(
         [input_field, send_button],

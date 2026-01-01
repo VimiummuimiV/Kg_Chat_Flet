@@ -2,10 +2,17 @@
 from pathlib import Path
 import threading
 import flet as ft
+
 from ui.accounts_manager import build_welcome
 from ui.ui_messages import build_messages_ui
 from ui.ui_userlist import build_userlist_ui, rebuild_userlist
-from settings.ui_scale import build_font_controls, load_font_size, apply_font_size, load_userlist_visible, save_userlist_visible
+from settings.ui_scale import (
+    build_font_controls,
+    load_font_size,
+    apply_font_size,
+    load_userlist_visible,
+    save_userlist_visible,
+)
 from core.xmpp import XMPPClient
 
 
@@ -62,18 +69,18 @@ def main(page: ft.Page):
                 page.update()
             
             toggle_users_btn = ft.ElevatedButton(
-                "👥",
-                on_click=on_toggle_userlist,
+                icon=ft.Icons.PEOPLE,
                 tooltip="Toggle user list",
-                width=50
+                width=48,
+                height=48,
+                on_click=on_toggle_userlist,
             )
-            
-            # Header with controls
+
+            # Header
             header = ft.Row(
                 [
                     toggle_users_btn,
                     ft.VerticalDivider(width=1),
-                    ft.Text("Font size:", size=11),
                     scale_slider,
                     scale_label
                 ],
