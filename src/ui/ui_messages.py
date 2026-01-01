@@ -55,46 +55,45 @@ def add_message_to_view(messages_view, msg, page):
     base_size = 11
     scaled_size = base_size * scale
     
-    # Format timestamp
+    # Format timestamp as HH:MM:SS (no brackets)
     timestamp = msg.timestamp if hasattr(msg, 'timestamp') and msg.timestamp else datetime.now()
-    time_str = timestamp.strftime("%H:%M")
+    time_str = timestamp.strftime("%H:%M:%S")
     
-    # Get login
+    # Get login and background color
     login = msg.login if msg.login else "Unknown"
+    bg_color = msg.background if hasattr(msg, 'background') and msg.background else None
     
-    # Create inline message: [HH:MM] username: message
-    message_text = ft.Text(
-        f"[{time_str}] {login}: {msg.body}",
+    # Create time part
+    time_text = ft.Text(
+        f"{time_str} ",
         size=scaled_size,
-        selectable=True,
-        no_wrap=False
+        color=ft.Colors.GREY_500
     )
     
-    # Add avatar if available
-    widgets = []
-    if hasattr(msg, 'get_avatar_url') and msg.get_avatar_url():
-        try:
-            avatar = ft.Image(
-                src=msg.get_avatar_url(),
-                width=int(20 * scale),
-                height=int(20 * scale),
-                fit=ft.ImageFit.COVER,
-                border_radius=ft.border_radius.all(3)
-            )
-            widgets.append(avatar)
-        except:
-            pass
+    # Create username part with color
+    username_text = ft.Text(
+        f"{login}: ",
+        size=scaled_size,
+        weight=ft.FontWeight.BOLD,
+        color=bg_color if bg_color else None
+    )
     
-    widgets.append(message_text)
+    # Create message part
+    message_text = ft.Text(
+        msg.body,
+        size=scaled_size,
+        selectable=True
+    )
     
+    # Combine in a row that wraps
     msg_row = ft.Row(
-        widgets,
-        spacing=6,
-        vertical_alignment=ft.CrossAxisAlignment.START
+        [time_text, username_text, message_text],
+        spacing=0,
+        wrap=True
     )
     
     messages_view.controls.append(msg_row)
     
-    # Auto-scroll to bottom
+    # Auto-scroll and limit messages
     if len(messages_view.controls) > 100:
         messages_view.controls.pop(0)
