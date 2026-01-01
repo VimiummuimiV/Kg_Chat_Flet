@@ -93,26 +93,18 @@ def main(page: ft.Page):
             try:
                 from notifications import send_chat_notification
             except Exception:
-                def send_chat_notification(msg, reply_callback=None, timeout=60):
-                    print("🔕 notifications.py not available; install desktop-notifier and add notifications.py")
+                def send_chat_notification(msg, timeout=10):
+                    print("🔕 notifications.py not available; install pynput")
                     return False
 
             def on_message(msg):
                 from ui.ui_messages import add_message_to_view
                 add_message_to_view(messages_view, msg, page)
 
-                # Show desktop notification for messages from others and allow reply
+                # Show desktop notification for messages from others
                 try:
                     if not getattr(msg, 'initial', False) and msg.login and msg.login != account.get('login'):
-                        def _reply_cb(text: str):
-                            try:
-                                # Send reply to the room, prefix with the recipient nickname for clarity
-                                reply_text = f"@{msg.login} {text}"
-                                xmpp_client.send_message(reply_text)
-                            except Exception as e:
-                                print(f"Error sending reply from notification: {e}")
-
-                        send_chat_notification(msg, reply_callback=_reply_cb)
+                        send_chat_notification(msg)
                 except Exception as e:
                     print(f"desktop notify error: {e}")
                 page.update()
