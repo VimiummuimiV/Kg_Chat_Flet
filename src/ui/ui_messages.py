@@ -112,3 +112,6 @@ def add_message_to_view(messages_view, msg, page):
     # Auto-scroll and limit messages
     if len(messages_view.controls) > 100:
         messages_view.controls.pop(0)
+
+    # Always scroll to bottom on new messages
+    page.run_task(messages_view.scroll_to, offset=10**9, duration=100)
