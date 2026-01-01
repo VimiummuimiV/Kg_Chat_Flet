@@ -12,7 +12,9 @@ from settings.ui_scale import (
     apply_font_size,
     load_userlist_visible,
     save_userlist_visible,
+    load_icon_settings,
 )
+from settings.themes import create_theme_toggle_button, load_theme_mode, get_theme_mode_enum
 from core.xmpp import XMPPClient
 
 
@@ -27,6 +29,10 @@ def main(page: ft.Page):
     page.data['font_size'] = load_font_size()
     # remember whether userlist should be visible
     page.data['userlist_visible'] = load_userlist_visible()
+    
+    # Load and apply saved theme
+    saved_theme = load_theme_mode()
+    page.theme_mode = get_theme_mode_enum(saved_theme)
     
     def on_connect(login, account):
         """Called when user clicks Connect in welcome screen."""
@@ -64,13 +70,12 @@ def main(page: ft.Page):
                 userlist_visible[0] = not userlist_visible[0]
                 users_container.visible = userlist_visible[0]
                 page.data['userlist_visible'] = userlist_visible[0]
-                from settings.ui_scale import save_userlist_visible
                 save_userlist_visible(userlist_visible[0])
                 page.update()
             
             # Configure button/icon sizes from config
-            from settings.ui_scale import load_icon_settings
             btn_size, icon_size = load_icon_settings()
+            
             toggle_users_btn = ft.IconButton(
                 icon=ft.Icon(ft.Icons.PEOPLE, size=icon_size),
                 tooltip="Toggle user list",
@@ -79,10 +84,14 @@ def main(page: ft.Page):
                 on_click=on_toggle_userlist,
             )
 
+            # Create theme toggle button using themes module
+            theme_btn = create_theme_toggle_button(page, icon_size=icon_size, btn_size=btn_size)
+
             # Header
             header = ft.Row(
                 [
                     toggle_users_btn,
+                    theme_btn,
                     ft.VerticalDivider(width=1),
                     scale_slider,
                     scale_label
