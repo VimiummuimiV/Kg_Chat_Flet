@@ -99,7 +99,7 @@ def main(page: ft.Page):
 
             def on_message(msg):
                 from ui.ui_messages import add_message_to_view
-                add_message_to_view(messages_view, msg, page)
+                add_message_to_view(messages_view, msg, page, input_field)
 
                 # Show desktop notification for messages from others
                 try:

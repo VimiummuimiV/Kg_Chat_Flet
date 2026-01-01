@@ -55,26 +55,27 @@ def build_messages_ui(page):
     return messages_container, input_field, send_button, messages_view
 
 
-def add_message_to_view(messages_view, msg, page):
+def add_message_to_view(messages_view, msg, page, input_field=None):
     """Add a message to the messages view - compact inline format.
-    
+
     Args:
         messages_view: ListView for messages
         msg: Message object with login, body, timestamp, etc.
         page: Page object for scaling
+        input_field: Optional TextField to insert usernames into when clicked
     """
     scale = page.data.get('font_size', 100) / 100.0
     base_size = 11
     scaled_size = base_size * scale
-    
+
     # Format timestamp as HH:MM:SS (no brackets)
     timestamp = msg.timestamp if hasattr(msg, 'timestamp') and msg.timestamp else datetime.now()
     time_str = timestamp.strftime("%H:%M:%S")
-    
+
     # Get login and background color
     login = msg.login if msg.login else "Unknown"
     bg_color = msg.background if hasattr(msg, 'background') and msg.background else None
-    
+
     # Create time part (store base size so apply_font_size is consistent)
     time_text = ft.Text(
         f"{time_str} ",
@@ -99,16 +100,66 @@ def add_message_to_view(messages_view, msg, page):
     )
     message_text._base_size = base_size
     message_text.size = base_size * scale
-    
+
+    # Unified handler for single and double click actions
+    def _handle_username_click(name, double=False):
+        if not input_field:
+            return
+        cur = (input_field.value or "").strip()
+        # Build current username list from comma-separated values
+        existing = [t.strip() for t in cur.split(',') if t.strip()]
+
+        if double:
+            # Special case: if field currently contains exactly one username (whatever it is), clear it
+            if len(existing) == 1:
+                input_field.value = ""
+                input_field.focus = True
+                page.update()
+                return
+            # Otherwise, replace entire field with the clicked username
+            input_field.value = f"{name}, "
+            input_field.focus = True
+            page.update()
+            return
+
+        # Single click: add username if not present; prevent duplicates
+        if name in existing:
+            input_field.focus = True
+            page.update()
+            return
+
+        new_list = existing + [name]
+        input_field.value = ", ".join(new_list) + ", "
+        input_field.focus = True
+        page.update()
+
+    # Wrap the username in an interactive gesture if available
+    username_control = username_text
+    try:
+        # GestureDetector supports single and double tap
+        username_control = ft.GestureDetector(
+            content=username_text,
+            on_tap=lambda e, n=login: _handle_username_click(n, False),
+            on_double_tap=lambda e, n=login: _handle_username_click(n, True)
+        )
+    except Exception:
+        # Fallback: attach a single-click handler if possible
+        try:
+            username_text.on_click = lambda e, n=login: _handle_username_click(n, False)
+            username_control = username_text
+        except Exception:
+            # Nothing we can do — leave it non-interactive
+            username_control = username_text
+
     # Combine in a row that wraps
     msg_row = ft.Row(
-        [time_text, username_text, message_text],
+        [time_text, username_control, message_text],
         spacing=0,
         wrap=True
     )
-    
+
     messages_view.controls.append(msg_row)
-    
+
     # Auto-scroll and limit messages
     if len(messages_view.controls) > 100:
         messages_view.controls.pop(0)
