@@ -16,6 +16,10 @@ def build_messages_ui(page):
         auto_scroll=True
     )
     
+    # Calculate initial font size based on scale
+    scale = page.data.get('font_size', 100) / 100.0
+    base_text_size = 12
+    
     input_field = ft.TextField(
         label="Type a message...",
         multiline=True,
@@ -23,8 +27,10 @@ def build_messages_ui(page):
         min_lines=1,
         max_lines=3,
         expand=True,
-        text_size=12
+        text_size=base_text_size * scale
     )
+    # Opt into font size scaling system
+    input_field._base_text_size = base_text_size
     
     send_button = ft.Button("Send", height=40)
     
