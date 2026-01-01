@@ -120,12 +120,12 @@ def _create_user_row(user, scale, scaled_size, in_game=False, page=None):
             user_widgets.append(avatar)
         except Exception as e:
             print(f"Error creating avatar image for {user.login}: {e}")
-            # Fallback to person icon
-            fallback = ft.Icon(ft.Icons.PERSON, size=int(16 * scale), color=ft.Colors.GREY_500)
+            # Fallback to person icon - same size as avatar
+            fallback = ft.Icon(ft.Icons.PERSON, size=int(20 * scale), color=ft.Colors.GREY_500)
             user_widgets.append(fallback)
     else:
-        # No avatar, show person icon
-        fallback = ft.Icon(ft.Icons.PERSON, size=int(16 * scale), color=ft.Colors.GREY_500)
+        # No avatar, show person icon - same size as avatar
+        fallback = ft.Icon(ft.Icons.PERSON, size=int(20 * scale), color=ft.Colors.GREY_500)
         user_widgets.append(fallback)
 
     # Get and optimize username color
