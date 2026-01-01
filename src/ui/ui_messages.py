@@ -1,36 +1,40 @@
 """Messages display UI for the chat."""
 import flet as ft
-from flet import Column, ListView, Text, Row, TextField, Button, Image
+from datetime import datetime
 
 
-def build_messages_ui():
+def build_messages_ui(page):
     """Build and return the messages view and send handler.
     
     Returns:
         (messages_container, input_field, send_button, messages_view)
     """
-    messages_view = ListView(expand=True, spacing=4)
+    messages_view = ft.ListView(
+        expand=True,
+        spacing=2,
+        padding=ft.padding.all(5),
+        auto_scroll=True
+    )
     
-    input_field = TextField(
+    input_field = ft.TextField(
         label="Type a message...",
         multiline=True,
         min_lines=1,
         max_lines=3,
-        expand=True
+        expand=True,
+        text_size=12
     )
     
-    send_button = Button("Send", width=80)
+    send_button = ft.ElevatedButton("Send", height=40)
     
-    input_row = Row(
+    input_row = ft.Row(
         [input_field, send_button],
-        expand=True,
-        spacing=6,
+        spacing=8,
         vertical_alignment=ft.CrossAxisAlignment.END,
-        tight=True
     )
     
     # Container for messages + input
-    messages_container = Column(
+    messages_container = ft.Column(
         [messages_view, input_row],
         expand=True,
         spacing=8
@@ -39,43 +43,58 @@ def build_messages_ui():
     return messages_container, input_field, send_button, messages_view
 
 
-def add_message_to_view(messages_view, login: str, text: str, avatar_url: str = None):
-    """Add a message to the messages view.
+def add_message_to_view(messages_view, msg, page):
+    """Add a message to the messages view - compact inline format.
     
     Args:
         messages_view: ListView for messages
-        login: username
-        text: message body
-        avatar_url: optional avatar URL
+        msg: Message object with login, body, timestamp, etc.
+        page: Page object for scaling
     """
-    # Message row: avatar + username + text
-    msg_widgets = []
+    scale = page.data.get('scale', 100) / 100.0
+    base_size = 11
+    scaled_size = base_size * scale
     
-    if avatar_url:
-        try:
-            avatar = Image(
-                src=avatar_url,
-                width=24,
-                height=24,
-                fit=ft.ImageFit.COVER,
-                border_radius=ft.border_radius.all(4)
-            )
-            msg_widgets.append(avatar)
-        except:
-            # Avatar failed to load
-            pass
+    # Format timestamp
+    timestamp = msg.timestamp if hasattr(msg, 'timestamp') and msg.timestamp else datetime.now()
+    time_str = timestamp.strftime("%H:%M")
     
-    # Username and message
-    username_text = Text(f"[{login}]", weight="bold", size=11)
-    message_text = Text(text, size=11)
+    # Get login
+    login = msg.login if msg.login else "Unknown"
     
-    text_col = Column(
-        [username_text, message_text],
-        spacing=2,
-        expand=True
+    # Create inline message: [HH:MM] username: message
+    message_text = ft.Text(
+        f"[{time_str}] {login}: {msg.body}",
+        size=scaled_size,
+        selectable=True,
+        no_wrap=False
     )
     
-    msg_widgets.append(text_col)
+    # Add avatar if available
+    widgets = []
+    if hasattr(msg, 'get_avatar_url') and msg.get_avatar_url():
+        try:
+            avatar = ft.Image(
+                src=msg.get_avatar_url(),
+                width=int(20 * scale),
+                height=int(20 * scale),
+                fit=ft.ImageFit.COVER,
+                border_radius=ft.border_radius.all(3)
+            )
+            widgets.append(avatar)
+        except:
+            pass
     
-    msg_row = Row(msg_widgets, spacing=8, expand=True)
+    widgets.append(message_text)
+    
+    msg_row = ft.Row(
+        widgets,
+        spacing=6,
+        vertical_alignment=ft.CrossAxisAlignment.START
+    )
+    
     messages_view.controls.append(msg_row)
+    
+    # Auto-scroll to bottom
+    if len(messages_view.controls) > 100:
+        messages_view.controls.pop(0)

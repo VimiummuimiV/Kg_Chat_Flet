@@ -8,10 +8,32 @@ from flet import Page, Text, Row, Column, Dropdown, TextField, ElevatedButton, S
 from core.accounts import AccountManager
 
 
+LAST_ACCOUNT_FILE = Path.home() / ".kg_chat_last_account"
+
+
+def load_last_account() -> str:
+    """Load last selected account login."""
+    try:
+        with open(LAST_ACCOUNT_FILE, "r") as f:
+            return f.read().strip()
+    except:
+        return None
+
+
+def save_last_account(login: str):
+    """Save last selected account login."""
+    try:
+        with open(LAST_ACCOUNT_FILE, "w") as f:
+            f.write(login)
+    except:
+        pass
+
+
 def build_welcome(page: Page, on_connect_callback=None):
     """Build and display the welcome/account management screen."""
     page.title = "KG Chat - Welcome"
     page.vertical_alignment = ft.MainAxisAlignment.START
+    page.padding = 20
 
     cfg_path = str(Path(__file__).parent.parent / "config.json")
     acct_mgr = AccountManager(cfg_path)
@@ -25,29 +47,41 @@ def build_welcome(page: Page, on_connect_callback=None):
     def make_options() -> List[ft.dropdown.Option]:
         opts = []
         for acc in acct_mgr.list_accounts():
-            label = f"{acc['login']}{' (active)' if acc.get('active') else ''}"
+            label = acc['login']
             opts.append(ft.dropdown.Option(key=acc['login'], text=label))
         return opts
 
-    account_dd = Dropdown(options=make_options(), value=None, width=320)
+    account_dd = Dropdown(
+        options=make_options(),
+        value=None,
+        width=280,
+        label="Select Account"
+    )
 
     connect_btn = ElevatedButton("Connect")
     remove_btn = ElevatedButton("Remove")
 
-    userid_field = TextField(label="User ID", width=140)
-    login_field = TextField(label="Username", width=180)
-    password_field = TextField(label="Password", password=True, width=180)
+    userid_field = TextField(label="User ID", width=120)
+    login_field = TextField(label="Username", width=150)
+    password_field = TextField(label="Password", password=True, width=150)
     add_btn = ElevatedButton("Add")
 
-    # Refresh dropdown and default selection
+    # Refresh dropdown and restore last selection
     def refresh_dd():
         opts = make_options()
         account_dd.options = opts
-        active = next((a for a in acct_mgr.list_accounts() if a.get('active')), None)
-        if active:
-            account_dd.value = active['login']
+        
+        if opts:
+            # Try to restore last selected account
+            last_account = load_last_account()
+            if last_account and any(opt.key == last_account for opt in opts):
+                account_dd.value = last_account
+            else:
+                # Default to first account
+                account_dd.value = opts[0].key
         else:
-            account_dd.value = opts[0].key if opts else None
+            account_dd.value = None
+        
         page.update()
 
     refresh_dd()
@@ -62,7 +96,7 @@ def build_welcome(page: Page, on_connect_callback=None):
         if not userid:
             userid = login
         ok = acct_mgr.add_account(user_id=userid, login=login, password=pwd)
-        notify("Added" if ok else "Already exists")
+        notify("Account added" if ok else "Account already exists")
         if ok:
             userid_field.value = ""
             login_field.value = ""
@@ -75,7 +109,7 @@ def build_welcome(page: Page, on_connect_callback=None):
             notify("No account selected")
             return
         ok = acct_mgr.remove_account(val)
-        notify("Removed" if ok else "Not found")
+        notify("Account removed" if ok else "Account not found")
         refresh_dd()
 
     def on_connect(e):
@@ -87,6 +121,10 @@ def build_welcome(page: Page, on_connect_callback=None):
         if not account:
             notify("Account not found")
             return
+        
+        # Save last selected account
+        save_last_account(val)
+        
         notify(f"Connecting as {val}...", duration=1000)
         if on_connect_callback:
             on_connect_callback(val, account)
@@ -95,15 +133,27 @@ def build_welcome(page: Page, on_connect_callback=None):
     remove_btn.on_click = on_remove
     connect_btn.on_click = on_connect
 
-    header = Text("Welcome to KG Chat", size=24)
+    header = Text("Welcome to KG Chat", size=28, weight=ft.FontWeight.BOLD)
 
     controls = Column(
         [
             header,
-            Row([account_dd, Row([connect_btn, remove_btn], spacing=12)], alignment=ft.MainAxisAlignment.START),
-            Row([userid_field, login_field, password_field, add_btn], spacing=12),
+            ft.Divider(height=20),
+            ft.Text("Select or Add Account", size=16, weight=ft.FontWeight.W_500),
+            Row(
+                [account_dd, connect_btn, remove_btn],
+                spacing=10,
+                alignment=ft.MainAxisAlignment.START
+            ),
+            ft.Divider(height=20),
+            ft.Text("Add New Account", size=16, weight=ft.FontWeight.W_500),
+            Row(
+                [userid_field, login_field, password_field, add_btn],
+                spacing=10,
+                alignment=ft.MainAxisAlignment.START
+            ),
         ],
-        tight=True,
+        spacing=10,
         expand=False,
     )
 

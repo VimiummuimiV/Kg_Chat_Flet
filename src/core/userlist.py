@@ -26,15 +26,9 @@ class ChatUser:
     def get_avatar_url(self) -> str:
         """Get full avatar URL with _big suffix"""
         if self.avatar:
-            # Convert: /storage/avatars/748754.png?updated=123
-            # To: https://klavogonki.ru/storage/avatars/748754_big.png?updated=123
-            
-            # Split path and query params
             parts = self.avatar.split('?')
             avatar_path = parts[0].replace('.png', '')
             query = f"?{parts[1]}" if len(parts) > 1 else ""
-            
-            # Add _big.png with query params
             return f"https://klavogonki.ru{avatar_path}_big.png{query}"
         return None
 
@@ -63,7 +57,6 @@ class UserList:
                 user.avatar = avatar
             if background:
                 user.background = background
-            # Always set/clear game_id based on presence update so UI reflects current state
             user.game_id = game_id
             user.affiliation = affiliation
             user.role = role

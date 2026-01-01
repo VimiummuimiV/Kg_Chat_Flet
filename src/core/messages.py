@@ -58,7 +58,7 @@ class MessageParser:
     def _parse_messages(root: ET.Element) -> List[Message]:
         """Parse messages"""
         messages = []
-        ns = '{klavogonki:userdata}'  # FIX: Define namespace for child elements
+        ns = '{klavogonki:userdata}'
         
         for msg in root.findall('.//{jabber:client}message'):
             from_jid = msg.get('from', '')
@@ -73,22 +73,20 @@ class MessageParser:
             avatar = None
             background = None
            
-            # Try to get user data from klavogonki:userdata
             userdata = msg.find('.//' + ns + 'user')
             if userdata is not None:
-                login_elem = userdata.find(ns + 'login')  # FIX: Use namespace
+                login_elem = userdata.find(ns + 'login')
                 if login_elem is not None and login_elem.text:
                     login = login_elem.text
                
-                avatar_elem = userdata.find(ns + 'avatar')  # FIX: Use namespace
+                avatar_elem = userdata.find(ns + 'avatar')
                 if avatar_elem is not None and avatar_elem.text:
                     avatar = avatar_elem.text
                
-                bg_elem = userdata.find(ns + 'background')  # FIX: Use namespace
+                bg_elem = userdata.find(ns + 'background')
                 if bg_elem is not None and bg_elem.text:
                     background = bg_elem.text
            
-            # If login still not found, extract from JID
             if not login and from_jid:
                 if '/' in from_jid:
                     resource = from_jid.split('/')[-1]
@@ -97,7 +95,6 @@ class MessageParser:
                     else:
                         login = resource
            
-            # Parse timestamp
             timestamp = None
             delay_elem = msg.find('.//{urn:xmpp:delay}delay')
             if delay_elem is not None:
@@ -127,7 +124,7 @@ class MessageParser:
     def _parse_presence(root: ET.Element) -> List[Presence]:
         """Parse presence"""
         presence_list = []
-        ns = '{klavogonki:userdata}'  # FIX: Define namespace for child elements
+        ns = '{klavogonki:userdata}'
        
         for pres in root.findall('.//{jabber:client}presence'):
             from_jid = pres.get('from', '')
@@ -141,15 +138,15 @@ class MessageParser:
            
             userdata = pres.find('.//' + ns + 'user')
             if userdata is not None:
-                login_elem = userdata.find(ns + 'login')  # FIX: Use namespace
+                login_elem = userdata.find(ns + 'login')
                 if login_elem is not None:
                     login = login_elem.text
                
-                avatar_elem = userdata.find(ns + 'avatar')  # FIX: Use namespace
+                avatar_elem = userdata.find(ns + 'avatar')
                 if avatar_elem is not None:
                     avatar = avatar_elem.text
                
-                bg_elem = userdata.find(ns + 'background')  # FIX: Use namespace
+                bg_elem = userdata.find(ns + 'background')
                 if bg_elem is not None:
                     background = bg_elem.text
            

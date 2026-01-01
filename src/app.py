@@ -3,15 +3,21 @@ from pathlib import Path
 import threading
 import flet as ft
 from ui.accounts_manager import build_welcome
-from ui.ui_messages import build_messages_ui, add_message_to_view
+from ui.ui_messages import build_messages_ui
 from ui.ui_userlist import build_userlist_ui, rebuild_userlist
-from settings.ui_scale import build_scale_controls, load_scale
+from settings.ui_scale import build_scale_controls, load_scale, apply_scale
 from core.xmpp import XMPPClient
 
 
 def main(page: ft.Page):
     page.title = "KG Chat"
+    page.padding = 10
     xmpp_client = None
+    
+    # Initialize scale in page.data
+    if page.data is None:
+        page.data = {}
+    page.data['scale'] = load_scale()
     
     def on_connect(login, account):
         """Called when user clicks Connect in welcome screen."""
@@ -24,55 +30,58 @@ def main(page: ft.Page):
             
             # Connect
             if not xmpp_client.connect(account):
-                ft.SnackBar(ft.Text("Failed to connect"), open=True)
+                page.snack_bar = ft.SnackBar(ft.Text("Failed to connect"), open=True)
+                page.update()
                 return
             
-            # Initialize scale in page.data
-            if page.data is None:
-                page.data = {}
-            page.data['scale'] = load_scale()
-            
             # Build chat interface
-            messages_container, input_field, send_button, messages_view = build_messages_ui()
-            users_container, users_view = build_userlist_ui()
+            messages_container, input_field, send_button, messages_view = build_messages_ui(page)
+            users_container, users_view = build_userlist_ui(page)
             
             # Build scale controls
-            scale_slider, scale_label, initial_scale = build_scale_controls()
+            def on_scale_change(value):
+                page.data['scale'] = value
+                apply_scale(page, value)
+                page.update()
+            
+            scale_slider, scale_label, initial_scale = build_scale_controls(on_scale_change)
+            apply_scale(page, initial_scale)
             
             # Create toggle button for userlist
-            userlist_visible = True
+            userlist_visible = [True]  # Use list to make it mutable in closure
             def on_toggle_userlist(e):
-                nonlocal userlist_visible
-                userlist_visible = not userlist_visible
-                users_container.visible = userlist_visible
+                userlist_visible[0] = not userlist_visible[0]
+                users_container.visible = userlist_visible[0]
                 page.update()
             
             toggle_users_btn = ft.IconButton(
-                ft.icons.PEOPLE,
+                icon=ft.icons.PEOPLE_ALT,
                 on_click=on_toggle_userlist,
                 tooltip="Toggle user list"
             )
             
             # Header with controls
             header = ft.Row(
-                [toggle_users_btn, ft.Divider(height=1), scale_slider, scale_label],
+                [
+                    toggle_users_btn,
+                    ft.VerticalDivider(width=1),
+                    ft.Text("Scale:", size=11),
+                    scale_slider,
+                    scale_label
+                ],
                 spacing=8,
                 vertical_alignment=ft.CrossAxisAlignment.CENTER,
-                expand=True
             )
             
             # Set up callbacks for messages and presence
             def on_message(msg):
-                messages_view.controls.append(
-                    ft.Row([
-                        ft.Text(f"[{msg.login or 'Unknown'}]: {msg.body}", size=11)
-                    ], expand=True)
-                )
+                from ui.ui_messages import add_message_to_view
+                add_message_to_view(messages_view, msg, page)
                 page.update()
             
             def on_presence(pres):
                 # Rebuild user list when presence changes
-                rebuild_userlist(users_view, xmpp_client.user_list.get_all())
+                rebuild_userlist(users_view, xmpp_client.user_list.get_all(), page)
                 page.update()
             
             xmpp_client.set_message_callback(on_message)
@@ -85,7 +94,7 @@ def main(page: ft.Page):
                     xmpp_client.join_room(room['jid'])
             
             # Initial user list
-            rebuild_userlist(users_view, xmpp_client.user_list.get_all())
+            rebuild_userlist(users_view, xmpp_client.user_list.get_all(), page)
             
             # Wire send button
             def on_send(e):
@@ -97,11 +106,17 @@ def main(page: ft.Page):
             
             send_button.on_click = on_send
             
+            # Handle Enter key in input field
+            def on_input_submit(e):
+                on_send(e)
+            
+            input_field.on_submit = on_input_submit
+            
             # Build main chat layout with userlist on the right
             main_content = ft.Row(
                 [messages_container, users_container],
                 expand=True,
-                spacing=8
+                spacing=10
             )
             
             # Clear and show chat UI with header
@@ -117,12 +132,14 @@ def main(page: ft.Page):
             threading.Thread(target=listen_thread, daemon=True).start()
         
         except Exception as ex:
-            ft.SnackBar(ft.Text(f"Error: {ex}"), open=True)
+            page.snack_bar = ft.SnackBar(ft.Text(f"Error: {ex}"), open=True)
+            page.update()
+            import traceback
+            traceback.print_exc()
     
     # Start with welcome screen
     build_welcome(page, on_connect_callback=on_connect)
 
 
 if __name__ == "__main__":
-    ft.app(target=main)
-
+    ft.run(target=main)

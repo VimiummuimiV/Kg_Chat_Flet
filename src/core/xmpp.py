@@ -28,7 +28,7 @@ class XMPPClient:
         self.presence_callback: Optional[Callable] = None
         
         self.user_list = UserList()
-        self.initial_roster_received = False  # Track if we got initial roster
+        self.initial_roster_received = False
         
         server = self.account_manager.get_server_config()
         self.url = server.get('url')
@@ -176,7 +176,6 @@ class XMPPClient:
         if not hasattr(self, '_joined_rooms'):
             self._joined_rooms = set()
         if room_jid in self._joined_rooms:
-            # Already joined — skip
             print(f"ℹ️ Already joined: {room_jid}")
             return
 
@@ -197,12 +196,10 @@ class XMPPClient:
         
         response = self.send_request(self.build_body(children=[presence]))
         
-        # Mark that we're receiving initial roster
         self.initial_roster_received = False
         self._process_response(response, is_initial_roster=True)
         self.initial_roster_received = True
 
-        # Record joined room
         self._joined_rooms.add(room_jid)
         print(f"🎉 Joined: {room_jid}")
     
@@ -240,9 +237,7 @@ class XMPPClient:
         messages, presence_updates = MessageParser.parse(xml_text)
         
         for msg in messages:
-            # Filter out automated/system messages or undesired bots
             body = (msg.body or "").strip()
-            # Skip messages from Klavobot (Cyrillic name) and messages mentioning "not anonymous"
             if msg.login == 'Клавобот' or ('not anonymous' in body.lower()):
                 continue
             try:
@@ -264,23 +259,19 @@ class XMPPClient:
                     affiliation=pres.affiliation,
                     role=pres.role
                 )
-                # Print join notifications so joins are visible in logs
                 try:
                     print(MessageParser.format_presence(pres))
                 except Exception:
                     pass
-                # Only send callback for actual joins (not initial roster)
                 if not is_initial_roster and self.initial_roster_received and self.presence_callback:
                     self.presence_callback(pres)
                     
             elif pres.presence_type == 'unavailable':
                 self.user_list.remove(pres.from_jid)
-                # print leave notifications as before
                 try:
                     print(MessageParser.format_presence(pres))
                 except Exception:
                     pass
-                # Always send leave notifications
                 if self.presence_callback:
                     self.presence_callback(pres)
     
