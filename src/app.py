@@ -2,6 +2,7 @@
 from pathlib import Path
 import threading
 import flet as ft
+from screeninfo import get_monitors
 
 from ui.accounts_manager import build_welcome
 from ui.ui_messages import build_messages_ui
@@ -22,6 +23,29 @@ from notifications import send_chat_notification
 def main(page: ft.Page):
     page.title = "KG Chat"
     page.padding = 10
+
+    window_width = 1100
+    window_height = 750
+
+    page.window.width = window_width
+    page.window.height = window_height
+    page.window.min_width = 900
+    page.window.min_height = 600
+    page.window.resizable = True
+
+    # Manual centering - works more smoothly
+    try:
+        monitor = get_monitors()[0]  # primary monitor
+        screen_width = monitor.width
+        screen_height = monitor.height
+
+        page.window.left = (screen_width - window_width) // 2
+        page.window.top = (screen_height - window_height) // 2
+    except Exception:
+        page.window.center()  # fallback if screeninfo fails
+
+    page.update()
+
     xmpp_client = None
     
     if page.data is None:
