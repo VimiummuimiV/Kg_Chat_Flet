@@ -97,31 +97,53 @@ def rebuild_userlist(users_view, users_list, page):
 
 
 def _create_user_row(user, scale, scaled_size, in_game=False, page=None):
+    """Create a row for a single user with avatar and username."""
     user_widgets = []
 
-    if hasattr(user, 'get_avatar_url') and user.get_avatar_url():
+    # Add avatar if available - use the existing get_avatar_url() method
+    avatar_url = None
+    if hasattr(user, 'get_avatar_url'):
         try:
+            avatar_url = user.get_avatar_url()
+        except Exception as e:
+            print(f"Error getting avatar URL for {user.login}: {e}")
+    
+    if avatar_url:
+        try:
+            # Create image without ImageFit (compatible with older Flet)
             avatar = ft.Image(
-                src=user.get_avatar_url(),
-                width=int(18 * scale),
-                height=int(18 * scale),
-                fit=ft.ImageFit.COVER,
-                border_radius=ft.border_radius.all(3)
+                src=avatar_url,
+                width=int(20 * scale),
+                height=int(20 * scale),
+                border_radius=ft.border_radius.all(4)
             )
             user_widgets.append(avatar)
-        except:
-            pass
+        except Exception as e:
+            print(f"Error creating avatar image for {user.login}: {e}")
+            # Fallback to person icon
+            fallback = ft.Icon(ft.Icons.PERSON, size=int(16 * scale), color=ft.Colors.GREY_500)
+            user_widgets.append(fallback)
+    else:
+        # No avatar, show person icon
+        fallback = ft.Icon(ft.Icons.PERSON, size=int(16 * scale), color=ft.Colors.GREY_500)
+        user_widgets.append(fallback)
 
+    # Get and optimize username color
     bg_color = user.background if hasattr(user, 'background') and user.background else None
 
     if bg_color:
         try:
             with open(Path(__file__).parent.parent / "config.json", 'r') as f:
                 ui_cfg = json.load(f).get('ui', {})
-            bg_color = optimize_color_contrast(bg_color, ui_cfg.get('background_color', '#1E1E1E'), target_ratio=ui_cfg.get('contrast_ratio', 4.5))
+            bg_color = optimize_color_contrast(
+                bg_color, 
+                ui_cfg.get('background_color', '#1E1E1E'), 
+                target_ratio=ui_cfg.get('contrast_ratio', 4.5)
+            )
         except:
             bg_color = optimize_color_contrast(bg_color, '#1E1E1E', target_ratio=4.5)
 
+    # Build display name with game counter if applicable
     display_name = user.login
     if in_game and getattr(user, 'game_id', None):
         s = page.data.setdefault('user_game_state', {}) if page is not None else {}
@@ -134,14 +156,21 @@ def _create_user_row(user, scale, scaled_size, in_game=False, page=None):
             new_counter = st.get('counter', 1)
         display_name = f"{user.login} 🚦{new_counter}"
     else:
+        # Clear game state when user returns to chat
         if page is not None and 'user_game_state' in page.data and user.login in page.data['user_game_state']:
             page.data['user_game_state'].pop(user.login, None)
 
+    # Create username text with color
     username_text = ft.Text(display_name, color=bg_color if bg_color else None)
     username_text._base_size = 11
     username_text.size = scaled_size
     user_widgets.append(username_text)
 
-    user_row = ft.Row(user_widgets, spacing=4, vertical_alignment=ft.CrossAxisAlignment.CENTER)
+    # Combine in a row
+    user_row = ft.Row(
+        user_widgets, 
+        spacing=6,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER
+    )
 
     return user_row
